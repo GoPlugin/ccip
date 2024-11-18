@@ -1,0 +1,330 @@
+version: 2
+project_name: plugin
+env:
+    - IMG_PRE={{ if index .Env "IMAGE_PREFIX"  }}{{ .Env.IMAGE_PREFIX }}{{ else }}localhost:5001{{ end }}
+    - IMG_TAG={{ if index .Env "IMAGE_TAG" }}{{ .Env.IMAGE_TAG }}{{ else }}develop{{ end }}
+    - CGO_ENABLED=1
+    - VERSION={{ if index .Env "PLUGIN_VERSION" }}{{ .Env.PLUGIN_VERSION }}{{ else }}v0.0.0-local{{ end }}
+release:
+    disable: "true"
+builds:
+    - targets:
+        - go_first_class
+      binary: plugin
+      hooks:
+        post:
+            - cmd: ./tools/bin/goreleaser_utils build_post_hook {{ dir .Path }}
+      no_unique_dist_dir: "true"
+      ldflags:
+        - -s -w -r=$ORIGIN/libs
+        - -X github.com/goplugin/pluginv3.0/v2/core/static.Sha={{ .FullCommit }}
+        - |-
+          -extldflags "-Wl,--dynamic-linker={{ if contains .Runtime.Goarch "amd64" -}}
+          /lib64/ld-linux-x86-64.so.2
+          {{- else if contains .Runtime.Goarch "arm64" -}}
+          /lib/ld-linux-aarch64.so.1
+          {{- end }}"
+        - -X github.com/goplugin/pluginv3.0/v2/core/static.Version={{ .Env.VERSION }}
+      flags:
+        - -trimpath
+        - -buildmode=pie
+archives:
+    - format: tar.gz
+snapshot:
+    version_template: '{{ .Env.VERSION }}-{{ .ShortCommit }}'
+checksum:
+    name_template: checksums.txt
+dockers:
+    - id: linux-amd64-plugin
+      goos: linux
+      goarch: amd64
+      dockerfile: core/plugin.goreleaser.Dockerfile
+      image_templates:
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-amd64'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-amd64'
+      skip_push: '{{ contains .Tag "-ccip" }}'
+      extra_files:
+        - tmp/libs
+      build_flag_templates:
+        - --platform=linux/amd64
+        - --pull
+        - --build-arg=PLUGIN_USER=plugin
+        - --build-arg=COMMIT_SHA={{ .FullCommit }}
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.description="node of the decentralized oracle network, bridging on and off-chain computation"
+        - --label=org.opencontainers.image.licenses=MIT
+        - --label=org.opencontainers.image.revision={{ .FullCommit }}
+        - --label=org.opencontainers.image.source=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.title=plugin
+        - --label=org.opencontainers.image.url=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      use: buildx
+    - id: linux-amd64-plugin-plugins
+      goos: linux
+      goarch: amd64
+      dockerfile: core/plugin.goreleaser.Dockerfile
+      image_templates:
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins-amd64'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins-amd64'
+      skip_push: '{{ contains .Tag "-ccip" }}'
+      extra_files:
+        - tmp/libs
+        - tmp/plugins
+      build_flag_templates:
+        - --platform=linux/amd64
+        - --pull
+        - --build-arg=PLUGIN_USER=plugin
+        - --build-arg=COMMIT_SHA={{ .FullCommit }}
+        - --build-arg=CL_MEDIAN_CMD=plugin-feeds
+        - --build-arg=CL_MERCURY_CMD=plugin-mercury
+        - --build-arg=CL_SOLANA_CMD=plugin-solana
+        - --build-arg=CL_STARKNET_CMD=plugin-starknet
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.description="node of the decentralized oracle network, bridging on and off-chain computation"
+        - --label=org.opencontainers.image.licenses=MIT
+        - --label=org.opencontainers.image.revision={{ .FullCommit }}
+        - --label=org.opencontainers.image.source=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.title=plugin
+        - --label=org.opencontainers.image.url=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      use: buildx
+    - id: linux-arm64-plugin
+      goos: linux
+      goarch: arm64
+      dockerfile: core/plugin.goreleaser.Dockerfile
+      image_templates:
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-arm64'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-arm64'
+      skip_push: '{{ contains .Tag "-ccip" }}'
+      extra_files:
+        - tmp/libs
+      build_flag_templates:
+        - --platform=linux/arm64
+        - --pull
+        - --build-arg=PLUGIN_USER=plugin
+        - --build-arg=COMMIT_SHA={{ .FullCommit }}
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.description="node of the decentralized oracle network, bridging on and off-chain computation"
+        - --label=org.opencontainers.image.licenses=MIT
+        - --label=org.opencontainers.image.revision={{ .FullCommit }}
+        - --label=org.opencontainers.image.source=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.title=plugin
+        - --label=org.opencontainers.image.url=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      use: buildx
+    - id: linux-arm64-plugin-plugins
+      goos: linux
+      goarch: arm64
+      dockerfile: core/plugin.goreleaser.Dockerfile
+      image_templates:
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins-arm64'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins-arm64'
+      skip_push: '{{ contains .Tag "-ccip" }}'
+      extra_files:
+        - tmp/libs
+        - tmp/plugins
+      build_flag_templates:
+        - --platform=linux/arm64
+        - --pull
+        - --build-arg=PLUGIN_USER=plugin
+        - --build-arg=COMMIT_SHA={{ .FullCommit }}
+        - --build-arg=CL_MEDIAN_CMD=plugin-feeds
+        - --build-arg=CL_MERCURY_CMD=plugin-mercury
+        - --build-arg=CL_SOLANA_CMD=plugin-solana
+        - --build-arg=CL_STARKNET_CMD=plugin-starknet
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.description="node of the decentralized oracle network, bridging on and off-chain computation"
+        - --label=org.opencontainers.image.licenses=MIT
+        - --label=org.opencontainers.image.revision={{ .FullCommit }}
+        - --label=org.opencontainers.image.source=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.title=plugin
+        - --label=org.opencontainers.image.url=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      use: buildx
+    - id: linux-amd64-ccip
+      goos: linux
+      goarch: amd64
+      dockerfile: core/plugin.goreleaser.Dockerfile
+      image_templates:
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-amd64'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-amd64'
+      skip_push: '{{ not (contains .Tag "-ccip") }}'
+      extra_files:
+        - tmp/libs
+        - ccip/config
+      build_flag_templates:
+        - --platform=linux/amd64
+        - --pull
+        - --build-arg=PLUGIN_USER=plugin
+        - --build-arg=COMMIT_SHA={{ .FullCommit }}
+        - --build-arg=CL_CHAIN_DEFAULTS=/plugin/ccip-config
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.description="node of the decentralized oracle network, bridging on and off-chain computation"
+        - --label=org.opencontainers.image.licenses=MIT
+        - --label=org.opencontainers.image.revision={{ .FullCommit }}
+        - --label=org.opencontainers.image.source=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.title=plugin
+        - --label=org.opencontainers.image.url=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      use: buildx
+    - id: linux-amd64-ccip-plugins
+      goos: linux
+      goarch: amd64
+      dockerfile: core/plugin.goreleaser.Dockerfile
+      image_templates:
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins-amd64'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins-amd64'
+      skip_push: '{{ not (contains .Tag "-ccip") }}'
+      extra_files:
+        - tmp/libs
+        - tmp/plugins
+        - ccip/config
+      build_flag_templates:
+        - --platform=linux/amd64
+        - --pull
+        - --build-arg=PLUGIN_USER=plugin
+        - --build-arg=COMMIT_SHA={{ .FullCommit }}
+        - --build-arg=CL_CHAIN_DEFAULTS=/plugin/ccip-config
+        - --build-arg=CL_MEDIAN_CMD=plugin-feeds
+        - --build-arg=CL_MERCURY_CMD=plugin-mercury
+        - --build-arg=CL_SOLANA_CMD=plugin-solana
+        - --build-arg=CL_STARKNET_CMD=plugin-starknet
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.description="node of the decentralized oracle network, bridging on and off-chain computation"
+        - --label=org.opencontainers.image.licenses=MIT
+        - --label=org.opencontainers.image.revision={{ .FullCommit }}
+        - --label=org.opencontainers.image.source=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.title=plugin
+        - --label=org.opencontainers.image.url=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      use: buildx
+    - id: linux-arm64-ccip
+      goos: linux
+      goarch: arm64
+      dockerfile: core/plugin.goreleaser.Dockerfile
+      image_templates:
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-arm64'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-arm64'
+      skip_push: '{{ not (contains .Tag "-ccip") }}'
+      extra_files:
+        - tmp/libs
+        - ccip/config
+      build_flag_templates:
+        - --platform=linux/arm64
+        - --pull
+        - --build-arg=PLUGIN_USER=plugin
+        - --build-arg=COMMIT_SHA={{ .FullCommit }}
+        - --build-arg=CL_CHAIN_DEFAULTS=/plugin/ccip-config
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.description="node of the decentralized oracle network, bridging on and off-chain computation"
+        - --label=org.opencontainers.image.licenses=MIT
+        - --label=org.opencontainers.image.revision={{ .FullCommit }}
+        - --label=org.opencontainers.image.source=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.title=plugin
+        - --label=org.opencontainers.image.url=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      use: buildx
+    - id: linux-arm64-ccip-plugins
+      goos: linux
+      goarch: arm64
+      dockerfile: core/plugin.goreleaser.Dockerfile
+      image_templates:
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins-arm64'
+        - '{{ .Env.IMG_PRE }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins-arm64'
+      skip_push: '{{ not (contains .Tag "-ccip") }}'
+      extra_files:
+        - tmp/libs
+        - tmp/plugins
+        - ccip/config
+      build_flag_templates:
+        - --platform=linux/arm64
+        - --pull
+        - --build-arg=PLUGIN_USER=plugin
+        - --build-arg=COMMIT_SHA={{ .FullCommit }}
+        - --build-arg=CL_CHAIN_DEFAULTS=/plugin/ccip-config
+        - --build-arg=CL_MEDIAN_CMD=plugin-feeds
+        - --build-arg=CL_MERCURY_CMD=plugin-mercury
+        - --build-arg=CL_SOLANA_CMD=plugin-solana
+        - --build-arg=CL_STARKNET_CMD=plugin-starknet
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.description="node of the decentralized oracle network, bridging on and off-chain computation"
+        - --label=org.opencontainers.image.licenses=MIT
+        - --label=org.opencontainers.image.revision={{ .FullCommit }}
+        - --label=org.opencontainers.image.source=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.title=plugin
+        - --label=org.opencontainers.image.url=https://github.com/goplugin/pluginv3.0
+        - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      use: buildx
+docker_manifests:
+    - id: tagged-plugin-plugin-experimental-goreleaser
+      name_template: '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}'
+      skip_push: '{{ contains .Tag "-ccip" }}'
+      image_templates:
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-amd64'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-arm64'
+    - id: sha-plugin-plugin-experimental-goreleaser
+      name_template: '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}'
+      skip_push: '{{ contains .Tag "-ccip" }}'
+      image_templates:
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-amd64'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-arm64'
+    - id: tagged-plugins-plugin-plugin-experimental-goreleaser
+      name_template: '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins'
+      skip_push: '{{ contains .Tag "-ccip" }}'
+      image_templates:
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins-amd64'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins-arm64'
+    - id: sha-plugins-plugin-plugin-experimental-goreleaser
+      name_template: '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins'
+      skip_push: '{{ contains .Tag "-ccip" }}'
+      image_templates:
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins-amd64'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins-arm64'
+    - id: tagged-plugin-plugin-ccip-experimental-goreleaser
+      name_template: '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}'
+      skip_push: '{{ not (contains .Tag "-ccip") }}'
+      image_templates:
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-amd64'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-arm64'
+    - id: sha-plugin-plugin-ccip-experimental-goreleaser
+      name_template: '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}'
+      skip_push: '{{ not (contains .Tag "-ccip") }}'
+      image_templates:
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-amd64'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-arm64'
+    - id: tagged-plugins-plugin-plugin-ccip-experimental-goreleaser
+      name_template: '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins'
+      skip_push: '{{ not (contains .Tag "-ccip") }}'
+      image_templates:
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins-amd64'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:{{ .Env.IMG_TAG }}-plugins-arm64'
+    - id: sha-plugins-plugin-plugin-ccip-experimental-goreleaser
+      name_template: '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins'
+      skip_push: '{{ not (contains .Tag "-ccip") }}'
+      image_templates:
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins-amd64'
+        - '{{ .Env.IMAGE_PREFIX }}/plugin/plugin-ccip-experimental-goreleaser:sha-{{ .ShortCommit }}-plugins-arm64'
+changelog:
+    filters:
+        exclude:
+            - '^docs:'
+            - '^test:'
+    sort: asc
+before:
+    hooks:
+        - cmd: go mod tidy
+        - cmd: ./tools/bin/goreleaser_utils before_hook
+sboms:
+    - artifacts: archive
+partial:
+    by: target
+nightly:
+    version_template: '{{ .Env.VERSION }}-{{ .Env.IMG_TAG }}'
