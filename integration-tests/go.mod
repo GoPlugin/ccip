@@ -40,7 +40,8 @@ require (
 	github.com/goplugin/plugin-testing-framework/lib/grafana v1.50.0
 	github.com/goplugin/plugin-testing-framework/seth v1.50.2
 	github.com/goplugin/plugin-testing-framework/wasp v1.50.0
-	github.com/goplugin/pluginv3.0/v2 v2.0.0-00010101000000-000000000000
+	github.com/goplugin/pluginv3.0/v2 v2.4.0
+	//github.com/goplugin/pluginv3.0/v2 v2.0.0-00010101000000-000000000000
 	github.com/goplugin/plugin-libocr v0.0.0-20240717100443-f6226e09bee7
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0

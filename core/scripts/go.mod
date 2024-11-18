@@ -25,7 +25,8 @@ require (
 	github.com/goplugin/chain-selectors v1.0.30
 	github.com/goplugin/plugin-automation v1.0.4
 	github.com/goplugin/plugin-common v0.2.3-0.20240925085218-aded1b263ecc
-	github.com/goplugin/pluginv3.0/v2 v2.0.0-00010101000000-000000000000
+	github.com/goplugin/pluginv3.0/v2 v2.4.0
+	//github.com/goplugin/pluginv3.0/v2 v2.0.0-00010101000000-000000000000
 	github.com/goplugin/plugin-libocr v0.0.0-20240717100443-f6226e09bee7
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2

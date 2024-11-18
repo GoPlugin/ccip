@@ -19,8 +19,11 @@ require (
 	github.com/goplugin/plugin-testing-framework/lib v1.50.9
 	github.com/goplugin/plugin-testing-framework/seth v1.50.2
 	github.com/goplugin/plugin-testing-framework/wasp v1.50.0
-	github.com/goplugin/pluginv3.0/integration-tests v0.0.0-20240214231432-4ad5eb95178c
-	github.com/goplugin/pluginv3.0/v2 v2.9.0-beta0.0.20240216210048-da02459ddad8
+	github.com/goplugin/plugin-testing-framework/wasp v1.50.0
+	github.com/goplugin/pluginv3.0/integration-tests v2.1.0
+	//github.com/goplugin/pluginv3.0/integration-tests v0.0.0-20240214231432-4ad5eb95178c
+	github.com/goplugin/pluginv3.0/v2 v2.1.0
+	//github.com/goplugin/pluginv3.0/v2 v2.9.0-beta0.0.20240216210048-da02459ddad8
 	github.com/goplugin/tdh2/go/tdh2 v0.0.0-20230906073235-9e478e5e19f1
 	github.com/stretchr/testify v1.9.0
 	github.com/wiremock/go-wiremock v1.9.0
